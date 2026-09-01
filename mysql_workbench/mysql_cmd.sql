@@ -827,4 +827,351 @@ call aumento(@valorinicial, 15.00);
 -- verificando se a variável externa valorinicial foi alterada:
 select @valorinicial;
 
+-- Exemplo com SELECt... INTO ( o desconto será dado diretamente
+-- em reais,não porcentagem; os comandos devem ser ajustados 
+-- para retornar apenas uma linha no SELECT ..INTO):
+use db_Biblioteca;
 
+delimiter //
+create function calcula_desconto(livro int, desconto decimal(10,2))
+returns decimal(10,2)
+deterministic
+n-- Exemplo com bloco IF ... 
+delimiter //
+create function  calcula_imposto(salario decimal(8,2))
+returns decimal(8,2)
+deterministic
+no sql
+sql security definer
+begin
+    declare valor_imposto dec(8,2);
+    if salario < 1000.00 then
+       set valor_imposto = 0.00;
+    elseif salario < 2000.00 then
+       set valor_imposto = salario * 0.15;
+    elseif salario < 3000.00 then
+       set valor_imposto = salario * 0.22;
+     else
+       set valor_imposto = salario * 0.27;
+       end if;
+       return valor_imposto;     
+end //
+delimiter ;
+-- Testando passndo valores de salários como parâmetro
+-- Usando valores como 850, 1200 e 6000 para testes:
+select calcula_imposto(6000.00);
+
+use db_Biblioteca;
+-- Exemplo 2 ... 
+delimiter //
+create function  calcula_imposto_case(salario decimal(8,2))
+returns decimal(8,2)
+deterministic
+no sql
+sql security definer
+begin
+    declare valor_imposto decimal(8,2);
+    case
+    when salario < 1000.00 then
+       set valor_imposto = 0.00;
+    when salario < 2000.00 then
+       set valor_imposto = salario * 0.15;
+    when salario < 3000.00 then
+       set valor_imposto = salario * 0.22;
+     else
+       set valor_imposto = salario * 0.27;
+       end case;
+       return valor_imposto;     
+end //
+delimiter ;
+select calcula_imposto_case(4600.00);o sql
+sql security definer
+begin
+    declare preço decimal(10,2);
+    select Preço_Livro from tbl_Livro
+    where ID_Livro = livro into preço;
+    return preço - desconto;
+    
+end //
+delimiter ;
+ -- Testando com o livro de ID 24 e desconto de R$10,00:
+ 
+ select * from tbl_Livro where ID_Livro = 26;
+ select calcula_desconto(26, 10.00);
+ 
+ select * from tbl_Livro where ID_Livro = 26;
+
+
+-- Exemplo com bloco IF ... 
+delimiter //
+create function  calcula_imposto(salario decimal(8,2))
+returns decimal(8,2)
+deterministic
+no sql
+sql security definer
+begin
+    declare valor_imposto dec(8,2);
+    if salario < 1000.00 then
+       set valor_imposto = 0.00;
+    elseif salario < 2000.00 then
+       set valor_imposto = salario * 0.15;
+    elseif salario < 3000.00 then
+       set valor_imposto = salario * 0.22;
+     else
+       set valor_imposto = salario * 0.27;
+       end if;
+       return valor_imposto;     
+end //
+delimiter ;
+-- Testando passndo valores de salários como parâmetro
+-- Usando valores como 850, 1200 e 6000 para testes:
+select calcula_imposto(6000.00);
+
+use db_Biblioteca;
+-- Exemplo 2 ... 
+delimiter //
+create function  calcula_imposto_case(salario decimal(8,2))
+returns decimal(8,2)
+deterministic
+no sql
+sql security definer
+begin
+    declare valor_imposto decimal(8,2);
+    case
+    when salario < 1000.00 then
+       set valor_imposto = 0.00;
+    when salario < 2000.00 then
+       set valor_imposto = salario * 0.15;
+    when salario < 3000.00 then
+       set valor_imposto = salario * 0.22;
+     else
+       set valor_imposto = salario * 0.27;
+       end case;
+       return valor_imposto;     
+end //
+delimiter ;
+select calcula_imposto_case(4600.00);
+
+
+# Acessando via liinha  de comando o mysql
+
+
+mysql> show databases;
++----------------------+
+| Database             |
++----------------------+
+| db_Biblioteca        |
+| information_schema   |
+| mysql                |
+| performance_schema   |
+| sys                  |
+| teste_restore_backup |
++----------------------+
+6 rows in set (0,01 sec)
+
+mysql> 
+mysql> use db_Biblioteca;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+mysql> show tables;
++-------------------------+
+| Tables_in_db_Biblioteca |
++-------------------------+
+| Meus_Clientes           |
+| Vendas                  |
+| tbl_Autores             |
+| tbl_Livro               |
+| tbl_editoras            |
+| tbl_teste_incremento    |
+| teste_nulos             |
+| vw_livrosAutores        |
++-------------------------+
+8 rows in set (0,01 sec)
+
+mysql> show create table  tbl_Livro;
++-----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Table     | Create Table                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
++-----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| tbl_Livro | CREATE TABLE `tbl_Livro` (
+  `ID_Livro` smallint NOT NULL AUTO_INCREMENT,
+  `Nome_Livro` varchar(50) NOT NULL,
+  `ISBN` varchar(30) NOT NULL,
+  `Data_Pub` date NOT NULL,
+  `Preço_Livro` decimal(10,0) NOT NULL,
+  `ID_Autor` smallint NOT NULL,
+  `ID_Editoras` smallint NOT NULL,
+  PRIMARY KEY (`ID_Livro`),
+  KEY `fk_ID_Autor` (`ID_Autor`),
+  KEY `fk_ID_Editoras` (`ID_Editoras`),
+  CONSTRAINT `fk_ID_Autor` FOREIGN KEY (`ID_Autor`) REFERENCES `tbl_Autores` (`ID_Autor`),
+  CONSTRAINT `fk_ID_Editoras` FOREIGN KEY (`ID_Editoras`) REFERENCES `tbl_editoras` (`ID_Editoras`)
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci  |
++-----------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0,03 sec)
+
+mysql> 
+
+mysql> show create procedure verPreço;
++-----------+-----------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+| Procedure | sql_mode                                                                                                              | Create Procedure                                                                                                                                                          | character_set_client | collation_connection | Database Collation |
++-----------+-----------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+| verPreço  | ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION | CREATE DEFINER=`root`@`localhost` PROCEDURE `verPreço`(varLivro smallint)
+select concat('P preço é ', Preço_Livro) as Preço
+from tbl_Livro
+where ID_Livro = varLivro      | utf8mb4              | utf8mb4_0900_ai_ci   | utf8mb4_0900_ai_ci |
++-----------+-----------------------------------------------------------------------------------------------------------------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+1 row in set (0,03 sec)
+
+mysql> 
+
+mysql> show create function calcula_desconto;
++------------------+-----------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+| Function         | sql_mode                                                                                                              | Create Function                                                                                                                                                                                                                                                                                                   | character_set_client | collation_connection | Database Collation |
++------------------+-----------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+| calcula_desconto | ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION | CREATE DEFINER=`root`@`localhost` FUNCTION `calcula_desconto`(livro int, desconto decimal(10,2)) RETURNS decimal(10,2)
+    NO SQL
+    DETERMINISTIC
+begin
+    declare preço decimal(10,2);
+    select Preço_Livro from tbl_Livro
+    where ID_Livro = livro into preço;
+    return preço - desconto;
+    
+end     | utf8mb4              | utf8mb4_0900_ai_ci   | utf8mb4_0900_ai_ci |
++------------------+-----------------------------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------+----------------------+--------------------+
+1 row in set (0,00 sec)
+
+mysql> 
+
+mysql> 
+mysql> show columns from tbl_editoras;
++--------------+-------------+------+-----+---------+----------------+
+| Field        | Type        | Null | Key | Default | Extra          |
++--------------+-------------+------+-----+---------+----------------+
+| ID_Editoras  | smallint    | NO   | PRI | NULL    | auto_increment |
+| Nome_Editora | varchar(50) | NO   |     | NULL    |                |
++--------------+-------------+------+-----+---------+----------------+
+2 rows in set (0,04 sec)
+
+mysql>
+
+mysql> show columns from tbl_Livro;
++--------------+---------------+------+-----+---------+----------------+
+| Field        | Type          | Null | Key | Default | Extra          |
++--------------+---------------+------+-----+---------+----------------+
+| ID_Livro     | smallint      | NO   | PRI | NULL    | auto_increment |
+| Nome_Livro   | varchar(50)   | NO   |     | NULL    |                |
+| ISBN         | varchar(30)   | NO   |     | NULL    |                |
+| Data_Pub     | date          | NO   |     | NULL    |                |
+| Preço_Livro  | decimal(10,0) | NO   |     | NULL    |                |
+| ID_Autor     | smallint      | NO   | MUL | NULL    |                |
+| ID_Editoras  | smallint      | NO   | MUL | NULL    |                |
++--------------+---------------+------+-----+---------+----------------+
+7 rows in set (0,01 sec)
+
+mysql> show columns from tbl_Livro like 'I%';
++-------------+-------------+------+-----+---------+----------------+
+| Field       | Type        | Null | Key | Default | Extra          |
++-------------+-------------+------+-----+---------+----------------+
+| ID_Livro    | smallint    | NO   | PRI | NULL    | auto_increment |
+| ISBN        | varchar(30) | NO   |     | NULL    |                |
+| ID_Autor    | smallint    | NO   | MUL | NULL    |                |
+| ID_Editoras | smallint    | NO   | MUL | NULL    |                |
++-------------+-------------+------+-----+---------+----------------+
+4 rows in set (0,00 sec)
+
+mysql>
+
+
+mysql> show columns from tbl_Livro where type like 'varchar%';
++------------+-------------+------+-----+---------+-------+
+| Field      | Type        | Null | Key | Default | Extra |
++------------+-------------+------+-----+---------+-------+
+| Nome_Livro | varchar(50) | NO   |     | NULL    |       |
+| ISBN       | varchar(30) | NO   |     | NULL    |       |
++------------+-------------+------+-----+---------+-------+
+2 rows in set (0,01 sec)
+
+mysql> show grants for  root@localhost;
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Grants for root@localhost                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, RELOAD, SHUTDOWN, PROCESS, FILE, REFERENCES, INDEX, ALTER, SHOW DATABASES, SUPER, CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, CREATE VIEW, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, CREATE USER, EVENT, TRIGGER, CREATE TABLESPACE, CREATE ROLE, DROP ROLE ON *.* TO `root`@`localhost` WITH GRANT OPTION                                                                                                                                                                                                                                                                                                                                                                                     |
+| GRANT APPLICATION_PASSWORD_ADMIN,AUDIT_ABORT_EXEMPT,AUDIT_ADMIN,AUTHENTICATION_POLICY_ADMIN,BACKUP_ADMIN,BINLOG_ADMIN,BINLOG_ENCRYPTION_ADMIN,CLONE_ADMIN,CONNECTION_ADMIN,ENCRYPTION_KEY_ADMIN,FIREWALL_EXEMPT,FLUSH_OPTIMIZER_COSTS,FLUSH_STATUS,FLUSH_TABLES,FLUSH_USER_RESOURCES,GROUP_REPLICATION_ADMIN,GROUP_REPLICATION_STREAM,INNODB_REDO_LOG_ARCHIVE,INNODB_REDO_LOG_ENABLE,PASSWORDLESS_USER_ADMIN,PERSIST_RO_VARIABLES_ADMIN,REPLICATION_APPLIER,REPLICATION_SLAVE_ADMIN,RESOURCE_GROUP_ADMIN,RESOURCE_GROUP_USER,ROLE_ADMIN,SENSITIVE_VARIABLES_OBSERVER,SERVICE_CONNECTION_ADMIN,SESSION_VARIABLES_ADMIN,SET_USER_ID,SHOW_ROUTINE,SYSTEM_USER,SYSTEM_VARIABLES_ADMIN,TABLE_ENCRYPTION_ADMIN,TELEMETRY_LOG_ADMIN,XA_RECOVER_ADMIN ON *.* TO `root`@`localhost` WITH GRANT OPTION |
+| GRANT PROXY ON ``@`` TO `root`@`localhost` WITH GRANT OPTION                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
++----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+3 rows in set (0,02 sec)
+
+
+mysql> describe tbl_Livro;
++--------------+---------------+------+-----+---------+----------------+
+| Field        | Type          | Null | Key | Default | Extra          |
++--------------+---------------+------+-----+---------+----------------+
+| ID_Livro     | smallint      | NO   | PRI | NULL    | auto_increment |
+| Nome_Livro   | varchar(50)   | NO   |     | NULL    |                |
+| ISBN         | varchar(30)   | NO   |     | NULL    |                |
+| Data_Pub     | date          | NO   |     | NULL    |                |
+| Preço_Livro  | decimal(10,0) | NO   |     | NULL    |                |
+| ID_Autor     | smallint      | NO   | MUL | NULL    |                |
+| ID_Editoras  | smallint      | NO   | MUL | NULL    |                |
++--------------+---------------+------+-----+---------+----------------+
+7 rows in set (0,03 sec)
+
+
+# Acessando  informação do conteúdo banco de dadoos via prompt  do terminal...
+
+leandro@eu:~/leandro_dev/mysql_workbench$ mysqlshow -u root -p
+Enter password: 
++----------------------+
+|      Databases       |
++----------------------+
+| db_Biblioteca        |
+| information_schema   |
+| mysql                |
+| performance_schema   |
+| sys                  |
+| teste_restore_backup |
++----------------------+
+
+leandro@eu:~/leandro_dev/mysql_workbench$ mysqlshow -u root -p db_Biblioteca
+
+Enter password: 
+
+Database: db_Biblioteca
++----------------------+
+|        Tables        |
++----------------------+
+| Meus_Clientes        |
+| Vendas               |
+| tbl_Autores          |
+| tbl_Livro            |
+| tbl_editoras         |
+| tbl_teste_incremento |
+| teste_nulos          |
+| vw_livrosAutores     |
++----------------------+
+
+-- Estruturas de repetição LOOP ... 
+
+DELIMITER $$
+    
+CREATE PROCEDURE acumula (limite int)
+SQL SECURITY DEFINER
+BEGIN
+     declare contador int  default 0;
+     declare soma int default 0;
+     loop_teste: loop
+           set contador = contador + 1;
+           set soma = soma + contador;
+           if contador >= limite then
+              leave loop_teste;
+           end if;
+        end loop loop_teste;
+        select soma;
+END$$
+DELIMITER ;
+
+--  Testando ... 
+call acumula(100  );
