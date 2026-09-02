@@ -1175,3 +1175,348 @@ DELIMITER ;
 
 --  Testando ... 
 call acumula(100  );
+
+-- Estrutura REPEAT 
+
+DELIMITER $$ 
+CREATE PROCEDURE acumula_repita (limite tinyint unsigned)
+SQL SECURITY DEFINER
+BEGIN
+     declare contador tinyint unsigned default 0;
+     declare soma int default 0;
+     repeat
+         set contador = contador + 1;
+         set soma = soma + contador;
+     until contador  >= limite
+     end repeat;
+     select soma;
+END$$
+DELIMITER ;
+
+--  Testando ... 
+call acumula_repita(10);
+call acumula_repita(0); -- Este apresenta ovalor errado, pois
+-- o contador é incrementado Antes  do teste  condicional.... 
+
+# Correção do ploblema valor 1 derivado do teste... 
+drop procedure if exists acumula_repita;
+delimiter $ 
+CREATE PROCEDURE acumula_repita (limite tinyint unsigned)
+SQL SECURITY DEFINER
+main: BEGIN
+     declare contador tinyint unsigned default 0;
+     declare soma int default 0;
+     if limite < 1 then
+         select 'O valor deve  ser  maior que zero. ' as Erro;
+         leave main;
+     end if;    
+     repeat
+         set contador = contador + 1;
+         set soma = soma + contador;
+     until contador  >= limite
+     end repeat;
+     select soma;
+END$$
+DELIMITER ;
+
+--  Testando ... 
+call acumula_repita(10);
+call acumula_repita(0); -- agora o Erro  éreportado... 
+
+-- Estrutura WHILE
+DELIMITER $$ 
+CREATE PROCEDURE acumula_while(limite tinyint unsigned)
+SQL SECURITY DEFINER
+BEGIN
+     declare contador tinyint unsigned default 0;
+     declare soma int default 0;
+     while contador < limite do
+         set contador = contador + 1;
+         set soma = soma + contador;
+     end  while;
+     select soma;
+     END$$
+DELIMITER ;
+
+--  Testando ... 
+call acumula_while(10);
+call acumula_while(0);
+
+-- Estrutura INTERATE ... 
+DELIMITER $$ 
+CREATE PROCEDURE acumula_interate ( limite tinyint unsigned)
+SQL SECURITY DEFINER
+BEGIN
+     declare contador tinyint unsigned default 0;
+     declare soma int unsigned default 0;
+     teste: loop
+         set contador = contador + 1;
+         set soma = soma + contador;
+         if contador < limite then
+            iterate teste;
+         end if;
+         leave teste;
+     end loop teste;    
+     select soma;
+     END$$
+DELIMITER ;
+
+--  Testando ... 
+call acumula_interate(10);
+ 
+-- Usando ITERATE dentro de WHILE...  
+ DELIMITER $$ 
+CREATE PROCEDURE pares(limite tinyint unsigned)
+SQL SECURITY DEFINER
+main: BEGIN
+     declare contador tinyint default 0;
+     meuloop: while contador < limite do
+         set contador = contador + 1;
+         if mod(contador,2) then
+            iterate meuloop;
+         end if;
+         select concat(contador, ' é um número par') as valor;
+         end while;
+     END$$
+DELIMITER ;
+
+call pares(20);
+
+
+-- TRIGGER
+create table produto(
+idProduto int not null auto_increment,
+Nome_Produto varchar(45) null,
+Preço_Normal decimal(10,2) null,
+Preço_Desconto decimal(10,2) null,
+primary key (idProduto));
+
+--  Craindo Trigger: ... 
+create trigger tr_desconto before insert
+on produto
+for each row
+set NEW.Preço_Desconto = (NEW.Preço_Normal * 0.90);
+
+insert into produto (Nome_Produto, Preço_Normal)
+values ('DVD', 1.00), ('Pendrive', 18.00);
+
+select * from produto;
+
+## Gerenciamento de Usuários no MySQL...
+
+-- Consultando Usuários  do Banco de Dados ....
+
+mysql> select user  from mysql.user;
++------------------+
+| user             |
++------------------+
+| debian-sys-maint |
+| leandro_dev      |
+| mysql.infoschema |
+| mysql.session    |
+| mysql.sys        |
+| root             |
++------------------+
+
+mysql> select user, host  from mysql.user;
++------------------+-----------+
+| user             | host      |
++------------------+-----------+
+| debian-sys-maint | localhost |
+| leandro_dev      | localhost |
+| mysql.infoschema | localhost |
+| mysql.session    | localhost |
+| mysql.sys        | localhost |
+| root             | localhost |
++------------------+-----------+
+
+## Criando Usuários via prompt...
+
+mysql> create user hoher534@locahost identified  by '231275';
+Query OK, 0 rows affected (0,72 sec)
+
+-- Confirmando a criação do Usuário ....
+
+mysql> select user from mysql.user;
++------------------+
+| user             |
++------------------+
+| hoher534         |
+| debian-sys-maint |
+| leandro_dev      |
+| mysql.infoschema |
+| mysql.session    |
+| mysql.sys        |
+| root             |
++------------------+
+
+
+
+-- Criando usuário com asesso de qualquer local ' % ' ....
+
+mysql> create user oliver identified by '231275'
+    -> ;
+Query OK, 0 rows affected (0,36 sec)
+
+mysql> select user from mysql.user;
++------------------+
+| user             |
++------------------+
+| oliver           |
+| hoher534         |
+| debian-sys-maint |
+| leandro_dev      |
+| mysql.infoschema |
+| mysql.session    |
+| mysql.sys        |
+| root             |
++------------------+
+8 rows in set (0,04 sec)
+
+mysql> select user, host  from mysql.user;
++------------------+-----------+
+| user             | host      |
++------------------+-----------+
+| oliver           | %         |
+| hoher534         | locahost  |
+| debian-sys-maint | localhost |
+| leandro_dev      | localhost |
+| mysql.infoschema | localhost |
+| mysql.session    | localhost |
+| mysql.sys        | localhost |
+| root             | localhost |
++------------------+-----------+
+
+-- Criando usuário sem senha definida ...
+
+mysql> create user blabla@localhost;
+Query OK, 0 rows affected (0,22 sec)
+
+-- Definindo senha  para o usuário ...
+mysql> SET PASSWORD FOR 'blabla'@'localhost' = '231275';
+Query OK, 0 rows affected (0,39 sec)
+
+-- Renomeando o usuário .... 
+
+mysql> RENAME USER 'blabla'@'localhost' TO 'bla'@'localhost';
+Query OK, 0 rows affected (0,32 sec)
+
+-- Confirmando mudança ....
+mysql> select user, host  from mysql.user;
++------------------+-----------+
+| user             | host      |
++------------------+-----------+
+| oliver           | %         |
+| hoher534         | locahost  |
+| bla              | localhost |
+| debian-sys-maint | localhost |
+| leandro_dev      | localhost |
+| mysql.infoschema | localhost |
+| mysql.session    | localhost |
+| mysql.sys        | localhost |
+| root             | localhost |
++------------------+-----------+
+9 rows in set (0,05 sec)
+
+mysql> 
+
+-- Excluindo usuário ...
+mysql> drop user 'bla'@'localhost';
+Query OK, 0 rows affected (0,16 sec)
+
+-- Confirmando Exclusão...
+
+mysql> select user, host  from mysql.user;
++------------------+-----------+
+| user             | host      |
++------------------+-----------+
+| oliver           | %         |
+| hoher534         | locahost  |
+| debian-sys-maint | localhost |
+| leandro_dev      | localhost |
+| mysql.infoschema | localhost |
+| mysql.session    | localhost |
+| mysql.sys        | localhost |
+| root             | localhost |
++------------------+-----------+
+8 rows in set (0,02 sec)
+
+## Definido Privilégios aos Usuários...ABORT
+
+mysql> show grants for  leandro_dev@localhost;
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Grants for leandro_dev@localhost                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, RELOAD, SHUTDOWN, PROCESS, FILE, REFERENCES, INDEX, ALTER, SHOW DATABASES, SUPER, CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, CREATE VIEW, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, CREATE USER, EVENT, TRIGGER, CREATE TABLESPACE, CREATE ROLE, DROP ROLE ON *.* TO `leandro_dev`@`localhost`                                                                                                                                                                                                                                                                                                                                                                                     |
+| GRANT APPLICATION_PASSWORD_ADMIN,AUDIT_ABORT_EXEMPT,AUDIT_ADMIN,AUTHENTICATION_POLICY_ADMIN,BACKUP_ADMIN,BINLOG_ADMIN,BINLOG_ENCRYPTION_ADMIN,CLONE_ADMIN,CONNECTION_ADMIN,ENCRYPTION_KEY_ADMIN,FIREWALL_EXEMPT,FLUSH_OPTIMIZER_COSTS,FLUSH_STATUS,FLUSH_TABLES,FLUSH_USER_RESOURCES,GROUP_REPLICATION_ADMIN,GROUP_REPLICATION_STREAM,INNODB_REDO_LOG_ARCHIVE,INNODB_REDO_LOG_ENABLE,PASSWORDLESS_USER_ADMIN,PERSIST_RO_VARIABLES_ADMIN,REPLICATION_APPLIER,REPLICATION_SLAVE_ADMIN,RESOURCE_GROUP_ADMIN,RESOURCE_GROUP_USER,ROLE_ADMIN,SENSITIVE_VARIABLES_OBSERVER,SERVICE_CONNECTION_ADMIN,SESSION_VARIABLES_ADMIN,SET_USER_ID,SHOW_ROUTINE,SYSTEM_USER,SYSTEM_VARIABLES_ADMIN,TABLE_ENCRYPTION_ADMIN,TELEMETRY_LOG_ADMIN,XA_RECOVER_ADMIN ON *.* TO `leandro_dev`@`localhost` |
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+2 rows in set (0,02 sec)
+
+-- Adicionanod usuário com: 
+mysql> CREATE USER 'bla'@'localhost' IDENTIFIED BY '231275';
+Query OK, 0 rows affected (0,18 sec)
+
+-- Condendo privilégios básicos ...
+mysql> GRANT USAGE ON *.* TO 'bla'@'localhost';
+
+Query OK, 0 rows affected (0,07 sec)
+
+-- Confirmando criação usuário...
+
+mysql> select user, host  from mysql.user;
++------------------+-----------+
+| user             | host      |
++------------------+-----------+
+| oliver           | %         |
+| hoher534         | locahost  |
+| bla              | localhost |
+| debian-sys-maint | localhost |
+| leandro_dev      | localhost |
+| mysql.infoschema | localhost |
+| mysql.session    | localhost |
+| mysql.sys        | localhost |
+| root             | localhost |
++------------------+-----------+
+
+-- Verificando privilégios condedido:
+
+mysql> show  grants for bla@localhost;
++-----------------------------------------+
+| Grants for bla@localhost                |
++-----------------------------------------+
+| GRANT USAGE ON *.* TO `bla`@`localhost` |
++-----------------------------------------+
+
+-- Concedendo privilégios irrestritos:  
+
+mysql> GRANT ALL PRIVILEGES ON *.* TO 'bla'@'localhost' WITH GRANT OPTION;
+Query OK, 0 rows affected (0,23 sec)
+
+mysql> FLUSH PRIVILEGES;
+Query OK, 0 rows affected (0,14 sec)
+
+mysql> show  grants for bla@localhost;
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| Grants for bla@localhost                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, DROP, RELOAD, SHUTDOWN, PROCESS, FILE, REFERENCES, INDEX, ALTER, SHOW DATABASES, SUPER, CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE, REPLICATION SLAVE, REPLICATION CLIENT, CREATE VIEW, SHOW VIEW, CREATE ROUTINE, ALTER ROUTINE, CREATE USER, EVENT, TRIGGER, CREATE TABLESPACE, CREATE ROLE, DROP ROLE ON *.* TO `bla`@`localhost` WITH GRANT OPTION                                                                                                                                                                                                                                                                                                                                                                                     |
+| GRANT APPLICATION_PASSWORD_ADMIN,AUDIT_ABORT_EXEMPT,AUDIT_ADMIN,AUTHENTICATION_POLICY_ADMIN,BACKUP_ADMIN,BINLOG_ADMIN,BINLOG_ENCRYPTION_ADMIN,CLONE_ADMIN,CONNECTION_ADMIN,ENCRYPTION_KEY_ADMIN,FIREWALL_EXEMPT,FLUSH_OPTIMIZER_COSTS,FLUSH_STATUS,FLUSH_TABLES,FLUSH_USER_RESOURCES,GROUP_REPLICATION_ADMIN,GROUP_REPLICATION_STREAM,INNODB_REDO_LOG_ARCHIVE,INNODB_REDO_LOG_ENABLE,PASSWORDLESS_USER_ADMIN,PERSIST_RO_VARIABLES_ADMIN,REPLICATION_APPLIER,REPLICATION_SLAVE_ADMIN,RESOURCE_GROUP_ADMIN,RESOURCE_GROUP_USER,ROLE_ADMIN,SENSITIVE_VARIABLES_OBSERVER,SERVICE_CONNECTION_ADMIN,SESSION_VARIABLES_ADMIN,SET_USER_ID,SHOW_ROUTINE,SYSTEM_USER,SYSTEM_VARIABLES_ADMIN,TABLE_ENCRYPTION_ADMIN,TELEMETRY_LOG_ADMIN,XA_RECOVER_ADMIN ON *.* TO `bla`@`localhost` WITH GRANT OPTION |
++---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+2 rows in set (0,00 sec)
+
+-- Privilégios especifícos ...
+
+mysql> show databases;
++----------------------+
+| Database             |
++----------------------+
+| db_Biblioteca        |
+| information_schema   |
+| mysql                |
+| performance_schema   |
+| sys                  |
+| teste_restore_backup |
++----------------------+
+6 rows in set (0,11 sec)
+
+
