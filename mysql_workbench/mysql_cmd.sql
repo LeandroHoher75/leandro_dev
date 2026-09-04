@@ -1519,4 +1519,530 @@ mysql> show databases;
 +----------------------+
 6 rows in set (0,11 sec)
 
+mysql> 
+mysql> create user teste@localhost;
+Query OK, 0 rows affected (6,26 sec)
+
+mysql> grant select, insert, update, delete
+    -> on db_Biblioteca.*
+    -> to teste@localhost;
+Query OK, 0 rows affected (0,37 sec)
+
+mysql> show grants for teste@localhost;
++----------------------------------------------------------------------------------+
+| Grants for teste@localhost                                                       |
++----------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `teste`@`localhost`                                        |
+| GRANT SELECT, INSERT, UPDATE, DELETE ON `db_Biblioteca`.* TO `teste`@`localhost` |
++----------------------------------------------------------------------------------+
+2 rows in set (0,05 sec)
+
+-- Concedendo permissões especificas ao usuário...
+
+
+mysql> CREATE USER 'oliver'@'localhost' IDENTIFIED BY '231275';
+Query OK, 0 rows affected (0,22 sec)
+
+mysql> GRANT SELECT (Nome_Autor, Sobrenome_autor), UPDATE (Nome_autor)
+    -> ON db_Biblioteca.tbl_Autores
+    -> TO 'oliver'@'localhost';
+Query OK, 0 rows affected (0,26 sec)
+
+mysql> show grants  for oliver@localhost;
++--------------------------------------------------------------------------------------------------------------------------------+
+| Grants for oliver@localhost                                                                                                    |
++--------------------------------------------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `oliver`@`localhost`                                                                                     |
+| GRANT SELECT (`Nome_Autor`, `Sobrenome_autor`), UPDATE (`Nome_Autor`) ON `db_Biblioteca`.`tbl_Autores` TO `oliver`@`localhost` |
++--------------------------------------------------------------------------------------------------------------------------------+
+2 rows in set (0,00 sec)
+
+
+-- Revogando privilégios do usuário 'ESCOPO GLOBAL'
+
+@'localhost';
+Query OK, 0 rows affected (0,06 sec)
+
+mysql> SHOW GRANTS FOR 'oliver'@'localhost';
++--------------------------------------------------------------------------------------------------------------------------------+
+| Grants for oliver@localhost                                                                                                    |
++--------------------------------------------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `oliver`@`localhost`                                                                                     |
+| GRANT SELECT (`Nome_Autor`, `Sobrenome_autor`), UPDATE (`Nome_Autor`) ON `db_Biblioteca`.`tbl_Autores` TO `oliver`@`localhost` |
+
++--------------------------------------------------------------------------------------------------------------------------------+
+
+-- ESCOPO LOCAL...
+
+mysql> REVOKE UPDATE (Nome_Autor) ON db_Biblioteca.tbl_Autores FROM 'oliver'@'localhost';
+Query OK, 0 rows affected (0,23 sec)
+
+mysql> SHOW GRANTS FOR 'oliver'@'localhost';
++---------------------------------------------------------------------------------------------------------+
+| Grants for oliver@localhost                                                                             |
++---------------------------------------------------------------------------------------------------------+
+| GRANT USAGE ON *.* TO `oliver`@`localhost`                                                              |
+| GRANT SELECT (`Nome_Autor`, `Sobrenome_autor`) ON `db_Biblioteca`.`tbl_Autores` TO `oliver`@`localhost` |
++---------------------------------------------------------------------------------------------------------+
+2 rows in set (0,00 sec)
+
+-- Revogando todos  os privilégios de dois usuśrios de uma uníca vez..
+
+mysql> REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'teste'@'localhost', 'oliver'@'localhost';
+Query OK, 0 rows affected (0,16 sec)
+
+mysql> show grants  for teste@localhost;
++-------------------------------------------+
+| Grants for teste@localhost                |
++-------------------------------------------+
+| GRANT USAGE ON *.* TO `teste`@`localhost` |
++-------------------------------------------+
+1 row in set (0,01 sec)
+
+mysql> show grants  for oliver@localhost;
++--------------------------------------------+
+| Grants for oliver@localhost                |
++--------------------------------------------+
+| GRANT USAGE ON *.* TO `oliver`@`localhost` |
++--------------------------------------------+
+1 row in set (0,00 sec)
+
+## Campos  Gerados - Colunas Calcúladas GENERATED ALWAYS ... 
+
+create database Teste_innDB;
+
+use Teste_innDB;
+
+create table tbl_mult(
+id smallint primary key auto_increment,
+num1 smallint not null,
+num2 smallint not null,
+num3 smallint generated always as (num1 * num2) virtual
+);
+
+insert into tbl_mult (num1, num2)
+values (2,1), (2,2), (2,3), (2,4);
+
+
+select * from tbl_mult;
+
+update tbl_mult
+set num2 = 8
+where  id = 2;
+
+
+create table  tbl_Vendas ( 
+ID_Vendas smallint primary key auto_increment,
+Preço_Produto decimal(6,2) not  null,
+Qtde tinyint not null,
+Desconto decimal(4,2) not null,
+Preço_Total decimal(6,2) as( Preço_Produto * Qtde * (1 - Desconto / 100) ) stored
+);
+ insert into tbl_Vendas (Preço_Produto, Qtde, Desconto)
+ values
+ (50.00, 2, 20),
+ (65.00, 3, 15),
+ (100.00, 1, 12),
+ (132.00, 3, 18);
+ 
+ select * from tbl_Vendas;
+
+-- Tipo de dados  de Enumeração ' ENUM  ' ... 
+
+create table camisas (
+idCamisa tinyint primary key auto_increment,
+nome varchar(25),
+tamanho enum('pequena', 'média', 'grande', 'extra-grande')
+);
+
+insert into camisas (nome, tamanho)
+values ('regata','grande');
+
+
+select * from camisas;
+
+insert into camisas (nome, tamanho)
+values ('social', 'medium');
+
+insert into camisas (nome, tamanho)
+values
+('social', 'média'),
+('polo', 'pequena'),
+('polo', 'grande'),
+('camiseta', 'extra-grande');
+
+select * from camisas;
+
+/* Consultar os valores permissíveis para  a coluna */
+show columns
+from camisas
+like 'tamanho';
+
+/* Visualizar númeri de indíces dosvalores enumerados */
+select nome, tamanho+0
+from camisas;
+/* Problemas com ORDER BY */
+select  * from camisas
+order by  tamanho; 
+
+/* Resolvendo problema com ORDER BY */
+select * from camisas
+order by cast(tamanho as char);
+
+
+
+## Operador UNION- Unir dois ou mais resultados de Consultas ... 
+
+use db_biblioteca;
+
+select * from tbl_Livro;
+
+-- Exemplo 01
+select Nome_Livro Livro, Preço_Livro Preço, 
+'Livro Caro' Resultado
+from tbl_Livro
+where Preço_Livro >= 60.00
+union
+select Nome_Livro Livro, Preço_livro Preço, 
+'Preço Razoável' Resultado
+from tbl_Livro
+where Preço_Livro < 60.00
+order  by Preço;
+
+
+# Exemplo 02
+select Nome_Livro Livro, Data_Pub 'Data de  publicação',
+Preço_livro 'Preço Normaç',
+Preço_Livro * 0.90 'Preço Ajustado'
+from tbl_Livro
+where Preço_Livro > 65.00
+union
+select Nome_Livro Livro, Data_Pub 'data de Publicação',
+Preço_Livro 'Preço Normal',
+Preço_Livro * 1.15 'Preço A
+from tbl_Livro
+where Data_Pub < '20050211';
+
+
+## Conectando Script  em  Python ao banco de dados do Mysql...
+
+
+leandro@eu:~$ mkdir python_projeto
+leandro@eu:~$ cd  python_projeto/
+leandro@eu:~/python_projeto$  python3 -m venv venv
+leandro@eu:~/python_projeto$ source venv/bin/activate -- Ativa o ambiente 'venv'..
+(venv) leandro@eu:~/python_projeto$ pip install mysql-connector-python
+
+-- Testando Script teste de conexão...
+(venv) leandro@eu:~/python_projeto$ python3 conectar.py 
+Executando com: /home/leandro/python_projeto/venv/bin/python3
+✅ Conexão estabelecida com sucesso!
+Versão do MySQL: 8.0.46-0ubuntu0.24.04.4
+Versão do servidor: 8.0.46-0ubuntu0.24.04.4
+Conexão encerrada.
+(venv) leandro@eu:~/python_projeto$ nvim conectar.py
+(venv) leandro@eu:~/python_projeto$ nvim
+(venv) leandro@eu:~/python_projeto$ nvim
+(venv) leandro@eu:~/python_projeto$ nvim conectar.py
+(venv) leandro@eu:~/python_projeto$ deactivate -- Encerra a Sessão  'venv' ...
+
+# Criando  agendamento de eventos e tarefas...
+
+/*-- Agendamento de Eventos... 
+
+show  variables like 'event%'; -- se estiver OFF usar o comando ↓ seguinte:
+set global event_scheduler = on;
+
+select * from tbl_editoras;
+# Exemplo 01 -  Eventos
+delimiter $$
+create event insert_imediato
+on schedule at current_timestamp()
+do 
+begin
+	insert into tbl_editoras(Nome_Editora)
+	values('Höher534 Books');
+end $$
+delimiter ;
+
+show events from db_Biblioteca;
+
+
+select * from tbl_editoras;
+*/
+
+# Correção problema de Síntaxe...
+
+-- 1. Verificar status (opcional, para confirmar)
+SHOW VARIABLES LIKE 'event_scheduler';
+
+-- 2. Ativar (apenas para a sessão atual ou global - lembre-se do arquivo de config)
+SET GLOBAL event_scheduler = ON;
+-- 3. Verificar tabela
+SELECT * FROM db_Biblioteca.tbl_Editoras;
+
+-- 4. Criar o Evento Corrigido
+DELIMITER $$
+
+-- Se a ação for única, não use BEGIN...END.
+-- Se precisar de múltiplas ações, use BEGIN...END, mas a sintaxe muda um pouco.
+CREATE EVENT IF NOT EXISTS insert_imediato
+ON SCHEDULE AT CURRENT_TIMESTAMP()
+ON COMPLETION PRESERVE
+DO
+  INSERT INTO db_Biblioteca.tbl_editoras (Nome_Editora) 
+  VALUES ('Höher534 Books');
+
+DELIMITER ;
+
+SELECT * FROM information_schema.EVENTS 
+WHERE EVENT_SCHEMA = 'db_Biblioteca' 
+AND EVENT_NAME = 'insert_imediato';
+
+SELECT * FROM db_Biblioteca.tbl_editoras WHERE Nome_Editora = 'Höher534 Books';
+
+SHOW TABLES FROM db_Biblioteca;
+
+SELECT * FROM db_Biblioteca.tbl_editoras;
+SHOW DATABASES LIKE 'db_Biblioteca';
+
+USE db_Biblioteca;
+SHOW TABLES;
+
+DESCRIBE tbl_editoras; -- ou o nome correto que você viu no passo 2
+
+SELECT * 
+FROM db_Biblioteca.tbl_editoras 
+WHERE Nome_Editora = 'Höher534 Books';
+
+show events from tbl_editoras;
+
+# Exemplo 2
+delimiter $$
+create event insert_em_um_mes
+on schedule at now() + interval 1 month
+do begin
+   insert into tbl_editoras(Nome_Editoras)
+   values ('Tech Leandro Books');
+end $$
+delimiter ; 
+
+select * from tbl_editoras;
+
+show  events from db_Biblioteca;  
+   
+# Exemplo 3
+delimiter $$
+create event insert_mensal
+on schedule every 1 month
+starts '2026-10-26'
+ends '2027-09-15'
+do begin
+     insert into tbl_editoras(Nome_Editora)
+     values ('Hoher534 Books');
+     
+     drop event insert_em_um_mes;
+     
+end $$
+delimiter ;
+
+show events from db_Biblioteca;
+     
+ 
+-- Subconsultas 
+use db_Biblioteca;
+
+select Nome_Livro, Preço_Livro, ID_Editoras
+from tbl_Livro
+where ID_Editoras = 
+	(select ID_Editoras
+	from tbl_editoras
+	where Nome_Editora = 'Wiley');
+
+select *  from tbl_Livro;
+
+
+## Subconsuta para  Atualização... 
+
+update tbl_Livro
+set Preço_Livro = Preço_Livro * 1.12
+where ID_Editoras =
+    (select ID_Editoras
+    from tbl_editoras
+    where Nome_Editora = 'Microsoft Press');
+    
+    ## Versão Corrigida ... 
+    
+    UPDATE tbl_Livro
+SET Preço_Livro = Preço_Livro * 1.12
+WHERE ID_Editoras IN (
+    SELECT ID_Editoras 
+    FROM (
+        SELECT ID_Editoras 
+        FROM tbl_editoras 
+        WHERE Nome_Editora = 'Microsoft Press'
+    ) AS temp_table
+);
+
+select * from tbl_Livro;
+
+-- Verifique os nomes EXATOS na tabela de editoras
+SELECT Nome_Editora, LENGTH(Nome_Editora) as tamanho
+FROM tbl_editoras
+WHERE Nome_Editora LIKE '%Microsoft%';
+
+-- 1. Verifique se a subconsulta retorna algo
+SELECT ID_Editoras 
+FROM tbl_editoras 
+WHERE Nome_Editora = 'Microsoft Press';
+
+-- 2. Verifique se a tabela de livros tem esse ID
+SELECT ID_Editoras, count(*) 
+FROM tbl_Livro 
+GROUP BY ID_Editoras;
+
+
+-- Primeiro, veja quantas linhas SERIAM afetadas (SELECT de teste)
+SELECT COUNT(*) as linhas_a_atualizar
+FROM tbl_Livro
+WHERE ID_Editoras IN (
+    SELECT ID_Editoras 
+    FROM tbl_editoras 
+    WHERE TRIM(Nome_Editora) = 'Microsoft Press'
+);
+
+UPDATE tbl_Livro AS l
+INNER JOIN (
+    SELECT ID_Editoras 
+    FROM tbl_editoras 
+    WHERE TRIM(Nome_Editora) = 'Microsoft Press'
+) AS e ON l.ID_Editoras = e.ID_Editoras
+SET l.Preço_Livro = l.Preço_Livro * 1.12;
+
+
+-- Verifique o resultado
+SELECT * FROM tbl_Livro 
+WHERE ID_Editoras = 
+(SELECT ID_Editoras FROM tbl_editoras
+ WHERE TRIM(Nome_Editora) = 'Microsoft Press');
+
+
+
+## Funções de arredondamento 
+-- Testando a tabela... 
+select  * from tbl_Livro 
+where Preço_Livro;
+
+# Função ROUND()
+select Preço_Livro as 'Preço real',
+round(Preço_Livro) as 'Valores arrendondados'
+from tbl_Livro
+where Preço_Livro > 100.00;
+
+-- Função agregada 'Media' da soma total.... 
+select avg(Preço_Livro) as 'Preço Médio',
+round(avg(Preço_Livro),2) as 'Preço Médio arrendondado'
+from tbl_Livro;
+
+select Preço_Livro as 'Preço real',
+truncate(Preço_Livro,2) as 'Reais sem cantavos'
+from tbl_Livro
+where Preço_Livro > 100.00;
+
+
+# Transações - COMMIT e ROLLBACK
+set @@autocommit = off;
+select @@autocommit;
+
+# Transações
+-- Criar tabela para testes
+
+create table Dados_Livro
+select Nome_Livro, ISBN, Preço_Livro
+from tbl_Livro;
+
+-- Visualizar conteúdo da tabela
+select * from Dados_Livro;
+
+-- Acessando a tabela crida ... 
+
+
+# Transaçãoc om rollback
+
+start transaction;
+	delete from Dados_Livro;
+    insert into Dados_Livro(Nome_Livro,ISBN,Preço_Livro)
+    values('Ciẽncia de dados coom Python', '159357456', 69.88);
+    select * from Dados_Livro;
+ rollback;
+ 
+ select  * from Dados_Livro;
+ 
+ -- Correção:
+ -- Os  comandos devem ser inseridos conforme o seguinte:
+ -- 1. Verifica o estado inicial
+SELECT * FROM Dados_Livro; 
+-- (Suponha que aqui tenha dados antigos, ex: 'Livro A', 'Livro B')
+
+-- 2. Inicia a transação
+START TRANSACTION;
+
+-- 3. Apaga tudo
+DELETE FROM Dados_Livro;
+
+-- 4. Insere um novo (que só existe "temporariamente")
+INSERT INTO Dados_Livro(Nome_Livro, ISBN, Preço_Livro) 
+VALUES ('Livro Temporário', '999', 100.00);
+
+-- 5. Confirma que o novo livro está aqui
+SELECT * FROM Dados_Livro; 
+-- Retorno: Apenas 'Livro Temporário'
+
+-- 6. DESFAZ TUDO
+ROLLBACK;
+
+-- 7. Verifica o estado final
+SELECT * FROM Dados_Livro;
+-- Retorno: 'Livro A', 'Livro B' (Os dados originais voltaram, o 'temporário sumiu)
+    
+    
+ 
+ -- Correção: COMMIT
+ -- Os  comandos devem ser inseridos conforme o seguinte:
+ -- 1. Verifica o estado inicial
+SELECT * FROM Dados_Livro; 
+-- (Suponha que aqui tenha dados antigos, ex: 'Livro A', 'Livro B')
+
+-- 2. Inicia a transação
+START TRANSACTION;
+
+-- 3. Apaga tudo
+DELETE FROM Dados_Livro;
+
+-- 4. Insere um novo (que só existe "temporariamente")
+INSERT INTO Dados_Livro(Nome_Livro, ISBN, Preço_Livro) 
+VALUES ('Livro Temporário', '123456999', 100.00);
+
+-- 5. Confirma que o novo livro está aqui
+SELECT * FROM Dados_Livro; 
+-- Retorno: Apenas 'Livro Temporário'
+
+-- 6. DESFAZ TUDO
+commit;
+
+-- 7. Verifica o estado final
+SELECT * FROM Dados_Livro;
+
+    
+    
+   
+  
+
+    
+    
+   
+  
+  
+  
+
 
