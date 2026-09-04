@@ -2034,11 +2034,118 @@ commit;
 SELECT * FROM Dados_Livro;
 
     
-    
+ ## TRANSAÇÕES .... 
+
+# Exemplo com Stored Procedure 
+
+delimiter $$
+create procedure insere_dados()
+begin
+declare erro_sql tinyint default false
+declare continue handler for sqlexception erro_sql = true;
+start transaction;
+insert into Dados_Livro(Nome_Livro,ISBN,Preço_Livro) 
+values
+('História da  Numismática', '789456123',78.60),
+('Biologia Marinha', '321654987',   98,00),
+('Química Experimental', '654321987',165.32),
+('Artes Plásticas', '321987654', 177.50);
+if erro_sql = false then
+	commit;
+    select 'Transação efetuada com sucessso.' as Resultado;
+    else
+		rollback;
+        select 'Erro na transação' as Resultado;
+     end if;
+end 
+delimiter ; 
+
+
+## Corrreção .... 
+
+
+DELIMITER $$
+CREATE PROCEDURE insere_dados()
+BEGIN
+    DECLARE erro_sql TINYINT DEFAULT 0;
+    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET erro_sql = 1;
+    START TRANSACTION;
+    INSERT INTO Dados_Livro (Nome_Livro, ISBN, Preço_Livro) 
+    VALUES 
+    ('História da Numismática', '789456123', 78.60),
+    ('Biologia Marinha', '321654987', 98.00),
+    ('Química Experimental', '654321987', 165.32),
+    ('Artes Plásticas', '321987654', 177.50);
+    IF erro_sql = 0 THEN
+        COMMIT;
+        SELECT 'Transação efetuada com sucesso.' AS Resultado;
+    ELSE
+        ROLLBACK;
+        SELECT 'Erro na transação.' AS Resultado;
+    END IF;
+END$$
+DELIMITER ;
+
+call insere_dados(); 
+
+select * from Dados_Livro;   
    
   
+## Criando Chave primária ....
+ 
+## Criando no banco de dados:
 
-    
+create database db_Key_teste;
+use db_Key_teste;
+create table  funcionarios (
+		id_func smallint primary key auto_increment,
+        nome_func varchar(30) not null,
+        sbrenome_func varchar(50) not null        
+);
+
+# Conferir a tabela criada  e  sua chave primária ... 
+describe funcionarios;
+
+create table departamentos (
+		id_dep smallint auto_increment,
+        nome_dep varchar(30) not null,
+        constraint pk_id_dep primary key (id_dep)
+);
+
+describe departamentos;
+
+create table fornecedores (
+		id_forn smallint,
+        nome_forn varchar(30) not null
+        );
+        
+ describe fornecedores;       
+ 
+ # Adicinado restriçãode pk a coluna ... 
+ alter table fornecedores
+ add primary key (id_forn);
+ 
+ -- Conferindo a alteração na tabela ... 
+ describe fornecedores;       
+ 
+ -- Inserindo dados na tabela 
+  insert into fornecedores(id_forn, nome_forn)
+  values (3, "BLABLA");
+  
+  select * from  fornecedores;
+  
+ -- Criando PK_Composta .... 
+ create   table vendas (
+		id_prod smallint,
+		id_cliente smallint,
+        qtde smallint,
+        constraint primary key (id_prod, id_cliente)
+ );
+ -- Conferindo chave composta ... 
+ 
+ describe vendas;
+
+
     
    
   
