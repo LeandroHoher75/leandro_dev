@@ -43,7 +43,7 @@ Preço_Livro decimal not null
 
 show tables;
 
--- CÓDIGO PARA CRIAÇÃO DE TABELA
+- CÓDIGO PARA CRIAÇÃO DE TABELA
 
 create table tbl_Autores (
 ID_Autor smallint primary key,
@@ -2146,10 +2146,388 @@ create table fornecedores (
  describe vendas;
 
 
+ # Importando CSV ... 
+
+   show variables like 'secure_file_priv';
+
+-- Exemplo # CORRIGIDO.....
+DESCRIBE tbl_Autores;
+
+LOAD DATA INFILE '/var/lib/mysql-files/autores.csv'
+INTO TABLE tbl_Autores
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS
+(Nome_Autor, Sobrenome_Autor);
+
+select * from tbl_Autores;
+  
+ -- Exportando Arquivo CSV... 
+select Nome_Livro,Preço_Livro,Nome_Editora
+from tbl_Livro L
+inner join tbl_editoras E
+on L.ID_Editoras = E.ID_Editoras
+into outfile '/var/lib/mysql-files/teste1.csv'
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\n'
+
+
+-- Exportando Arquivo CSV...  Modo 2
+
+select Nome_Livro,Preço_Livro,Nome_Editora
+from tbl_Livro L
+inner join tbl_editoras E
+on L.ID_Editoras = E.ID_Editoras
+into outfile '/var/lib/mysql-files/teste2.csv'
+
+
+-- Modo 3: SELECT cabeçario .... 
+(select 'Livro','Preço','Editora' )
+union
+select Nome_Livro,Preço_Livro,Nome_Editora
+from tbl_Livro L
+inner join tbl_editoras E
+on L.ID_Editoras = E.ID_Editoras
+into outfile '/var/lib/mysql-files/teste3.csv'
+fields terminated by ','
+enclosed by '"'
+lines terminated by '\n'
+
+
+#  Função RAND()
+
+select rand(); -- Números aleatórios com ponto  flutuante
+
+select rand() * 10; -- N° int pomto float
+
+select floor(rand() * 10); -- N° inteiro literal
+
+select floor(5 + rand() * (5)) as aleatorio; 
+
+-- Selecção  aleatória da tabela com x valores ... 
+select * from tbl_Livro
+order by rand()
+limit 3;
+
+-- Sorteio em lista de Pessoas ou objetos ...
+select * from tbl_Livro
+order by rand()
+limit 1;
+
+-- Unido consultas com UNION ... 
+# Exemplo 01. 
+select Nome_Livro Livro, Preço_Livro Preço,
+'Livro Caro' Resultado
+from tbl_Livro
+where Preço_Livro >= 100.00
+union
+select Nome_Livro Livro, Preço_Livro Preço,
+'Preço Raazoável' Resultado
+from tbl_Livro
+where Preço_Livro < 100.00
+order by Preço;
+
+
+-- Formatação de datas DATE_FORMAT ... 
+select * from tbl_Livro;
+
+select  Nome_LIvro, date_format(Data_Pub, "%d/%m/%y") as 'Data de Publicação'
+from tbl_Livro;
+
+insert into tbl_Livro(ID_Livro, Nome_Livro, ISBN, Data_Pub, Preço_Livro, ID_Autor, ID_Editoras)
+values( 40,'Banco de Dados com MySQL','147852369', str_to_date("21/12/1985", "%d/%m/%Y"), 76.21, 5, 4);
+
+-- Filtrando Dados com  a claúsula WHERE .. BETWEEN Entre uma data e outra ... 
+
+select  Nome_LIvro, date_format(Data_Pub, "%d/%m/%y") as 'Data de Publicação'
+from tbl_Livro
+where Data_Pub between
+	(str_to_date("20/12/1985","%d/%m/%Y")) and
+    (str_to_date("20/12/2005","%d/%m/%Y"));
     
-   
-  
-  
+    
+-- Operadores de Comparação ... 
+use db_Biblioteca;
+
+select * from tbl_Livro;
+-- Operador  de 'Igualdade' ... 
+select Nome_Livro, Preço_Livro
+from tbl_Livro
+where Nome_Livro = 'Using Samba';
+
+-- Exemplo 2
+-- Operador 'Não Igual ( != ou <>)' ... 
+select Nome_Livro, Preço_Livro
+from tbl_Livro
+where Nome_Livro <> 'Using Samba';
+
+
+select * from tbl_editoras;
+
+-- Operador 'Maior ou Menor que : (< ou >)'... 
+select ID_Editoras, Nome_Editora
+from tbl_editoras
+where ID_Editoras < 4; 
+
+-- Por prefixo 'Strings, Letras'
+select ID_Editoras, Nome_Editora
+from tbl_editoras
+where Nome_Editora > 'D'
+order by Nome_Editora; 
+
+
+-- Operador 'Maior ou Igual: ( > ou =)'... 
+select ID_Editoras, Nome_Editora
+from tbl_editoras
+where ID_Editoras >= 4; 
+
+-- Operador ( < ) menor ou  anterior á:
+select  Nome_Livro, Data_Pub
+from tbl_Livro
+where Data_Pub < '2010-01-01';
+
+
+-- Operador  NULO ( null ) 
+select  Nome_Livro, Data_Pub
+from tbl_Livro
+where Data_Pub is null;
+
+
+-- Operador NÃO NULO (is not null ) 
+select  Nome_Livro, Data_Pub
+from tbl_Livro
+where Data_Pub is not null;
+
+
+-- Operador YEAR entre x e y: 
+select  Nome_Livro, Data_Pub
+from tbl_Livro
+where year(Data_Pub) between 2010 and 2015;
+
+-- Fora da Faixa ... 
+select Nome_Livro, Data_Pub
+from tbl_Livro
+where Preço_Livro not between 2010 and 2015;
+
+
+
+select * from tbl_Livro;
+
+-- Filtrando informações com EXIST ... 
+select 'Sim, Existe!!! ' as Resultado
+where exists
+(
+select *
+from tbl_editoras
+where Nome_Editora = 'wiley'
+);
+
+alter table tbl_Livro
+add Estado boolean;
+
+select * from tbl_Livro; 
+
+ -- Setando com Ids 'IMPAR" (TRUE) ... Livros NOVOS
+update tbl_Livro
+set Estado = true
+where ID_Livro in (25, 27,29,31,33,35);
+
+-- Com Ids "PAR" (FALSE) ...  Livros USADOS
+update tbl_Livro
+set Estado = false
+where ID_Livro  not in (25, 27,29,31,33,35);
+
+-- Filtrando por condição ... NOVOS
+select Nome_Livro, ISBN, Estado
+from tbl_Livro
+where Estado is true;
+ 
+-- Filtrando por condição ... USADOS
+select Nome_Livro, ISBN, Estado
+from tbl_Livro
+where Estado is false; 
+
+-- Operadores de   Comparação '% e _' ... 
+
+select * from tbl_Autores;
+
+-- Inicie com:
+select Nome_Autor, Sobrenome_AUtor
+from tbl_Autores
+where Nome_Autor like 'R%';
+
+-- Encerre com: 
+select Nome_Autor, Sobrenome_AUtor
+from tbl_Autores
+where Sobrenome_Autor like '%s';
+
+-- com X caracteres  no nome: 
+select Nome_Autor, Sobrenome_AUtor
+from tbl_Autores
+where Nome_Autor like 'B__';
+
+-- com X caracteres  no nome, um ou mais retornos: 
+select Nome_Autor, Sobrenome_AUtor
+from tbl_Autores
+where Nome_Autor like 'B%';
+
+-- Filtrando com NOT LIKE ... 
+
+select Nome_Editora
+from tbl_editoras
+where
+	Nome_Editora not like 'P%' and
+    Nome_Editora not like 'O%';
+
+# Diferença  entre DELETE TRUNCATE DROP ... 
+
+use db_Biblioteca;
+
+# Criar tabela
+create  table tbl_emprestimo (
+ID_Imprestimo smallint auto_increment,
+Nome_Pessoa varchar(60) not null,
+ID_Livro smallint not null,
+Data_Emprestimo date not null,
+Data_Devolução date,
+constraint pk_id_emprestimo primary key(ID_Emprestimo),
+constraint pk_livros_emprestimo foreign key(ID_Livro)
+     references tbl_Livro(ID_Livro)
+);
+# Verificando se tabela foi criada ...  
+show tables;
+
+-- PASSO 1: Criar a tabela se ela não existir
+CREATE TABLE IF NOT EXISTS tbl_Autor (
+    ID_Autor SMALLINT AUTO_INCREMENT PRIMARY KEY,
+    Nome_Autor VARCHAR(60) NOT NULL,
+    Nacionalidade VARCHAR(40)
+);
+
+-- PASSO 2: Inserir os dados (agora a tabela já existe)
+INSERT INTO tbl_Autor (ID_Autor, Nome_Autor, Nacionalidade)
+VALUES
+(1, 'J.R.R. Tolkien', 'Britânica'),
+(2, 'Machado de Assis', 'Brasileira'),
+(3, 'Antoine de Saint-Exupéry', 'Francesa'),
+(4, 'George Orwell', 'Britânica');
+
+INSERT INTO tbl_Livro (ID_Livro, Nome_Livro, ID_Editoras, ISBN, Data_Pub, Preço_Livro, ID_Autor)
+VALUES
+(100, 'O Senhor dos Anéis', 1, '978-85-359-0313-1', '1954-07-29', 45.90, 1),
+(101, 'Dom Casmurro', 1, '978-85-254-0301-5', '1899-01-01', 22.50, 2),
+(102, 'O Pequeno Príncipe', 1, '978-0-15-601219-5', '1943-04-06', 18.90, 3),
+(103, '1984', 1, '978-0-452-28423-4', '1949-06-08', 25.00, 4),
+(104, 'A Revolução dos Bichos', 1, '978-0-452-28423-5', '1945-08-17', 15.90, 4),
+(105, 'O Hobbit', 1, '978-0-547-92822-7', '1937-09-21', 32.90, 1);
+
+
+INSERT INTO tbl_emprestimo (Nome_Pessoa, ID_Livro, Data_Emprestimo, Data_Devolucao)
+VALUES
+('Ana Silva', 100, '2025-10-10', '2025-10-20'),
+('Bruno Costa', 101, '2025-11-12', NULL),
+('Carlos Lima', 102, '2025-10-15', '2025-10-22'),
+('Daniela Rocha', 103, '2025-12-18', NULL),
+('Eduardo Mendes', 104, '2025-11-20', NULL),
+('Monica Strega', 105, '2025-12-22', NULL);
+
+# Verificação de registros inseridos ...
+select *from tbl_emprestimo;
+
+# Desativar o Modo de Atualização Segura 
+SET SQL_SAFE_UPDATES = 0;
+
+# Exclusão de registros com DELETE FROM
+DELETE FROM tbl_emprestimo WHERE Data_Devolucao IS NOT NULL;
+
+-- Reativar a segurança depois (opcional)
+SET SQL_SAFE_UPDATES = 1;
+
+select *from tbl_emprestimo;
+
+
+# Limpando a tabela ...
+truncate table tbl_emprestimo;
+
+# Excluindo a tabela em si .... 
+drop table tbl_emprestimo;
+
+use db_Biblioteca;
+# Alterando e criando nova tabela ... 
+alter  table tbl_Livro
+add Data_Revisao date;
+select * from tbl_Livro;
+
+update tbl_Livro
+set Data_Revisao = '2021-05-22'
+where ID_Livro = 25;
+
+# Usando a função COALESCE ... 
+select Nome_Livro,
+       coalesce(Data_Revisao, Data_Pub, 'Data Não Disponível') 'Status'
+from tbl_Livro;
+
+# Usando Função de AGREGAÇÃO ... 
+select count(Data_Pub) as  'Livros Com Data'
+from tbl_Livro;
+
+select count(ID_Livro) as  'Livros Totais'
+from tbl_Livro;
+
+# Atualizando o valor  na tabela ... 
+update tbl_Livro
+set Preço_Livro = 0
+where ID_Livro = 26;
+
+#  Usando a função NULLIF
+select Nome_Livro,
+		nullif(Preço_Livro, 0) as 'Preço Tratado'
+from tbl_Livro;
+
+select Nome_Livro,
+		ifnull(nullif(Preço_Livro, 0), 'Preço Nao Informado')
+        as 'Preço Tratado'
+        from tbl_Livro;
+       
+# Usando a função ISNULL ... 
+select Nome_Livro,
+		isnull(Data_Pub) as 'Data Nula'
+from tbl_Livro;        
+			
+# Verificando se a tabela contém colunas NULAS ... 
+select Nome_Livro, Data_Pub
+from tbl_Livro
+where Data_Pub is null;
+
+# Se não contém ,,, 
+select Nome_Livro, Data_Pub
+from tbl_Livro
+where Data_Pub is not null;
+
+select Nome_Livro,
+       ifnull(Data_Pub, 'Data  Não Disponível') as  'Data  de  Publicação' 
+from tbl_Livro;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
   
 
 
